@@ -180,21 +180,40 @@ contract FlightSuretyApp {
       require(isRegistered, "The flight must be registered");
       dataContract.buy.value(msg.value)(flightKey, msg.sender);
     }
+
+    function withdraw
+      (
+       address airline,
+       string flight,
+       uint256 timestamp       
+      )
+      external payable {
+      bytes32 flightKey = getFlightKey(airline, flight, timestamp);
+      var (,isRegistered,statusCode,,) = dataContract.flights(flightKey);
+      require(isRegistered, "The flight must be registered");
+      require(statusCode > STATUS_CODE_ON_TIME, "The flight is not late");
+      uint256 insuredAmount = dataContract.fetchInsuredAmount(msg.sender, flightKey);
+      dataContract.setInsuredAmount(msg.sender, flightKey, 0);
+      uint256 payoutAmount = insuredAmount.mul(15).div(10);
+      uint256 airlineFundDeduction = payoutAmount.sub(insuredAmount);
+      dataContract.pay(msg.sender, payoutAmount, airlineFundDeduction, flightKey);
+    }
     
    /**
     * @dev Called after oracle has updated flight status
     *
     */  
     function processFlightStatus
-                                (
-                                    address airline,
-                                    string memory flight,
-                                    uint256 timestamp,
-                                    uint8 statusCode
-                                )
-                                internal
-                                pure
+      (
+       address airline,
+       string memory flight,
+       uint256 timestamp,
+       uint8 statusCode
+       )
+      internal
     {
+      bytes32 flightKey = getFlightKey(airline, flight, timestamp);
+      dataContract.creditInsurees(flightKey, statusCode);
     }
 
     // Generate a request for oracles to fetch flight information
@@ -415,8 +434,9 @@ contract FlightSuretyData {
   function flights(bytes32) public returns (string, bool, uint8, uint256, address);
   function registerFlight(string, bool, uint8, uint256, address) external;
   function buy(bytes32, address) external payable;
-  function creditInsurees() external pure;
-  function pay() external pure;
+  function creditInsurees(bytes32, uint8) external;
+  function pay(address, uint256, uint256, bytes32) external payable;
   function fund() public payable;
-
+  function fetchInsuredAmount(address, bytes32) external view returns(uint256);
+  function setInsuredAmount(address, bytes32, uint256) external;
 }

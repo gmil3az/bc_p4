@@ -39,6 +39,9 @@ contract FlightSuretyData {
   // Insurance
   mapping(address => mapping(bytes32 => uint256)) private insurance;
 
+  /* // Payouts */
+  /* mapping(address => uint256) private payouts; */
+
   
   /********************************************************************************************/
   /*                                       EVENT DEFINITIONS                                  */
@@ -199,6 +202,31 @@ contract FlightSuretyData {
     votes = airlines[_airline].votes;
   }
 
+  function fetchInsuredAmount
+    (
+     address insuree,
+     bytes32 flightKey
+     ) external
+    requireIsOperational
+    requireIsCallerAuthorized
+    view
+    returns(uint256 insuredAmount){
+    insuredAmount = insurance[insuree][flightKey];
+  }
+
+  function setInsuredAmount
+    (
+     address insuree,
+     bytes32 flightKey,
+     uint256 amount
+     ) external
+    requireIsOperational
+    requireIsCallerAuthorized
+  {
+    insurance[insuree][flightKey] = amount;
+  }
+    
+
   function registerFlight
     (
      string _flight,
@@ -242,10 +270,14 @@ contract FlightSuretyData {
    */
   function creditInsurees
     (
+     bytes32 flightKey,
+     uint8 flightStatusCode
                                 )
     external
-    pure
+    requireIsOperational
+    requireIsCallerAuthorized
   {
+    flights[flightKey].statusCode = flightStatusCode;
   }
     
 
@@ -255,10 +287,22 @@ contract FlightSuretyData {
    */
   function pay
     (
+     address insuree,
+     uint256 payoutAmount,
+     uint256 airlineFundDeduction,
+     bytes32 flightKey
                             )
     external
-    pure
+    requireIsOperational
+    requireIsCallerAuthorized
+    payable
   {
+    require(airlines[flights[flightKey].airline].fund >= airlineFundDeduction, "Airline fund is running out");
+    require(insurance[insuree][flightKey] > 0, "Insurance amount must be greater than 0");
+    airlines[flights[flightKey].airline].fund -= airlineFundDeduction;
+    insurance[insuree][flightKey] = 0;
+    address payableInsuree = address(uint160(insuree));
+    payableInsuree.transfer(payoutAmount);      
   }
 
   /**
