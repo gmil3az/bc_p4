@@ -25,6 +25,7 @@ contract FlightSuretyApp {
     uint8 private constant STATUS_CODE_LATE_OTHER = 50;
 
     address private contractOwner;          // Account used to deploy contract
+    FlightSuretyData private dataContract; // reference to the associated data contract
 
     struct Flight {
         bool isRegistered;
@@ -73,10 +74,12 @@ contract FlightSuretyApp {
     */
     constructor
                                 (
+				 address _dataContract
                                 ) 
                                 public 
     {
         contractOwner = msg.sender;
+	dataContract = FlightSuretyData(_dataContract);
     }
 
     /********************************************************************************************/
@@ -153,14 +156,28 @@ contract FlightSuretyApp {
         uint8 index = getRandomIndex(msg.sender);
 
         // Generate a unique key for storing the request
-        bytes32 key = keccak256(abi.encodePacked(index, airline, flight, timestamp));
+        bytes32 key = getFlightKey(index, airline, flight, timestamp);
         oracleResponses[key] = ResponseInfo({
                                                 requester: msg.sender,
                                                 isOpen: true
                                             });
 
         emit OracleRequest(index, airline, flight, timestamp);
-    } 
+    }
+
+    function getFlightKey
+      (
+       uint8 index,
+       address airline,
+       string memory flight,
+       uint256 timestamp
+       )
+      pure
+      internal
+      returns(bytes32) 
+    {
+      return keccak256(abi.encodePacked(index, airline, flight, timestamp));
+    }
 
 
 // region ORACLE MANAGEMENT
@@ -335,3 +352,13 @@ contract FlightSuretyApp {
 // endregion
 
 }   
+
+contract FlightSuretyData {
+  
+  function registerAirline() external pure;
+  function buy() external payable;
+  function creditInsurees() external pure;
+  function pay() external pure;
+  function fund() public payable;
+
+}
