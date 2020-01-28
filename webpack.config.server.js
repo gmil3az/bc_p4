@@ -5,6 +5,7 @@ const StartServerPlugin = require('start-server-webpack-plugin')
 
 module.exports = {
     entry: [
+	// 'babel-regenerator-runtime',
         'webpack/hot/poll?1000',
         './src/server/index'
     ],
