@@ -16,7 +16,7 @@ contract FlightSuretyApp {
     /*                                       DATA VARIABLES                                     */
     /********************************************************************************************/
 
-    // Flight status codees
+    // Flight status codes
     uint8 private constant STATUS_CODE_UNKNOWN = 0;
     uint8 private constant STATUS_CODE_ON_TIME = 10;
     uint8 private constant STATUS_CODE_LATE_AIRLINE = 20;
@@ -35,6 +35,18 @@ contract FlightSuretyApp {
     }
     mapping(bytes32 => Flight) private flights;
 
+    // Airline status codes
+    uint8 private constant AIRLINE_UNKNOWN = 0;
+    uint8 private constant AIRLINE_PENDING = 1;
+    uint8 private constant AIRLINE_REGISTERED = 2;
+    uint8 private constant AIRLINE_FUNDED = 3;
+    struct Airline {
+      uint8 statusCode;
+      address[] votes;
+    }
+
+    mapping(address => Airline) private airlines;
+    uint256 public numberOfRegisteredAirlines = 0;
  
     /********************************************************************************************/
     /*                                       FUNCTION MODIFIERS                                 */
@@ -62,6 +74,13 @@ contract FlightSuretyApp {
     {
         require(msg.sender == contractOwner, "Caller is not contract owner");
         _;
+    }
+
+    modifier requireRegisteredAirline()
+    {
+      require(airlines[msg.sender].statusCode == AIRLINE_REGISTERED ||
+	      airlines[msg.sender].statusCode == AIRLINE_FUNDED, "Airline must be registered");
+      _;
     }
 
     /********************************************************************************************/
@@ -104,14 +123,37 @@ contract FlightSuretyApp {
     *
     */   
     function registerAirline
-                            (   
-                            )
-                            external
-                            pure
-                            returns(bool success, uint256 votes)
+      (
+       address _airline
+       )
+      external
+      requireRegisteredAirline
+      returns(bool success, uint256 votes)
     {
-        return (success, 0);
+      require(airlines[_airline].statusCode == AIRLINE_UNKNOWN ||
+	      airlines[_airline].statusCode == AIRLINE_PENDING, "Airline has been registered already");
+      if(numberOfRegisteredAirlines > 4){
+	airlines[_airline].votes.push(msg.sender);
+	uint256 numberOfVotes = airlines[_airline].votes.length;
+	if(numberOfVotes > numberOfRegisteredAirlines.div(2)){
+	  _registerAirline(_airline);
+	}else{
+	  airlines[_airline].statusCode = AIRLINE_PENDING;
+	}
+      }else{
+	_registerAirline(_airline);
+      }
+      return (true, numberOfVotes);
     }
+
+    function _registerAirline
+      (
+       address _airline
+       ) internal {
+      airlines[_airline].statusCode = AIRLINE_REGISTERED;
+      numberOfRegisteredAirlines = numberOfRegisteredAirlines.add(1);
+    }
+      
 
 
    /**
