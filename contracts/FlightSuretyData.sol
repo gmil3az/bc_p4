@@ -13,9 +13,15 @@ contract FlightSuretyData {
   bool private operational = true;                                    // Blocks all state changes throughout the contract if false
   mapping(address => uint256) private authorizedContracts; // Store authorized app address allowed to access this data contract
 
+  // Airline status codes
+  uint8 private constant AIRLINE_UNKNOWN = 0;
+  uint8 private constant AIRLINE_PENDING = 1;
+  uint8 private constant AIRLINE_REGISTERED = 2;
+  uint8 private constant AIRLINE_FUNDED = 3;
   struct Airline {
     uint8 statusCode;
     address[] votes;
+    uint256 fund;
   }
   mapping(address => Airline) private airlines;
   uint256 public numberOfRegisteredAirlines = 0;
@@ -36,6 +42,7 @@ contract FlightSuretyData {
     public 
     {
       contractOwner = msg.sender;
+      _registerAirline(contractOwner, 0, new address[](0));
     }
 
   /********************************************************************************************/
@@ -68,6 +75,11 @@ contract FlightSuretyData {
   modifier requireIsCallerAuthorized()
   {
     require(authorizedContracts[msg.sender] == 1, "Caller is not allowed to access this data contract");
+    _;
+  }
+
+  modifier requireAirlineFunded(address _address){
+    require(airlines[_address].statusCode == AIRLINE_FUNDED, "Airline must be funded");
     _;
   }
 
@@ -144,9 +156,20 @@ contract FlightSuretyData {
     requireIsOperational
     requireIsCallerAuthorized
   {
+    _registerAirline(_airline, _statusCode, _votes);
+  }
+
+  function _registerAirline
+    (
+     address _airline,
+     uint8 _statusCode,
+     address[] _votes
+     )
+    internal
+  {
     airlines[_airline].statusCode = _statusCode;
     airlines[_airline].votes = _votes;
-    if(_statusCode == 1){
+    if(_statusCode == AIRLINE_REGISTERED){
       numberOfRegisteredAirlines = numberOfRegisteredAirlines.add(1);
     }
   }
@@ -207,11 +230,14 @@ contract FlightSuretyData {
    *
    */   
   function fund
-    (   
-                            )
+    ()
     public
     payable
   {
+    require(airlines[msg.sender].statusCode == AIRLINE_REGISTERED, "Airline must be registered first before funding");
+    require(msg.value >= 10 ether, "Fund must be greater or equals to 10 ether");
+    airlines[msg.sender].fund = msg.value;
+    airlines[msg.sender].statusCode = AIRLINE_FUNDED;
   }
 
   function getFlightKey
