@@ -27,15 +27,6 @@ contract FlightSuretyApp {
     address private contractOwner;          // Account used to deploy contract
     FlightSuretyData private dataContract; // reference to the associated data contract
 
-    struct Flight {
-        string flight;
-        bool isRegistered;
-        uint8 statusCode;
-        uint256 updatedTimestamp;        
-        address airline;
-    }
-    mapping(bytes32 => Flight) private flights;
-
     // Airline status codes
     uint8 private constant AIRLINE_UNKNOWN = 0;
     uint8 private constant AIRLINE_PENDING = 1;
@@ -168,14 +159,26 @@ contract FlightSuretyApp {
        uint256 timestamp
        )
       external
+      requireIsOperational
       requireAirlineFunded(msg.sender)
     {
-      require(!flights[key].isRegistered, "The flight has been registered already");
       bytes32 key = getFlightKey(msg.sender, flight, timestamp);
-      flights[key].flight = flight;
-      flights[key].isRegistered = true;
-      flights[key].updatedTimestamp = timestamp;
-      flights[key].airline = msg.sender;
+      var (,isRegistered,,,) = dataContract.flights(key);
+      require(!isRegistered, "The flight has been registered already");
+      dataContract.registerFlight(flight, true, 0, timestamp, msg.sender);
+    }
+
+    function buyFromApp
+      (
+       address _airline,
+       string _flight,
+       uint256 _timestamp
+       ) public payable requireIsOperational {
+      require((msg.value <= 1 ether) ,"The insurance amount must be less than or equal to 1 ether");
+      bytes32 flightKey = getFlightKey(_airline, _flight, _timestamp);
+      var (,isRegistered,,,) = dataContract.flights(flightKey);
+      require(isRegistered, "The flight must be registered");
+      dataContract.buy.value(msg.value)(flightKey, msg.sender);
     }
     
    /**
@@ -409,7 +412,9 @@ contract FlightSuretyData {
   function fetchAirline(address) external view returns(uint8, address[]);
   function numberOfRegisteredAirlines() external view returns(uint256);
   function airlines(address) public returns (uint8, address[], uint256);
-  function buy() external payable;
+  function flights(bytes32) public returns (string, bool, uint8, uint256, address);
+  function registerFlight(string, bool, uint8, uint256, address) external;
+  function buy(bytes32, address) external payable;
   function creditInsurees() external pure;
   function pay() external pure;
   function fund() public payable;

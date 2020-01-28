@@ -13,7 +13,7 @@ contract FlightSuretyData {
   bool private operational = true;                                    // Blocks all state changes throughout the contract if false
   mapping(address => uint256) private authorizedContracts; // Store authorized app address allowed to access this data contract
 
-  // Airline status codes
+  // Airlines 
   uint8 private constant AIRLINE_UNKNOWN = 0;
   uint8 private constant AIRLINE_PENDING = 1;
   uint8 private constant AIRLINE_REGISTERED = 2;
@@ -25,6 +25,19 @@ contract FlightSuretyData {
   }
   mapping(address => Airline) public airlines;
   uint256 public numberOfRegisteredAirlines = 0;
+
+  // Flights
+  struct Flight {
+    string flight;
+    bool isRegistered;
+    uint8 statusCode;
+    uint256 updatedTimestamp;        
+    address airline;
+  }
+  mapping(bytes32 => Flight) public flights;
+
+  // Insurance
+  mapping(address => mapping(bytes32 => uint256)) private insurance;
 
   
   /********************************************************************************************/
@@ -77,6 +90,11 @@ contract FlightSuretyData {
     require(authorizedContracts[msg.sender] == 1, "Caller is not allowed to access this data contract");
     _;
   }
+
+  /* modifier requireFlightIsRegistered(bytes32 key){ */
+  /*   require(flights[key].isRegistered, "Flight must be registered") */
+  /*   _; */
+  /* } */
 
   /********************************************************************************************/
   /*                                       UTILITY FUNCTIONS                                  */
@@ -181,18 +199,42 @@ contract FlightSuretyData {
     votes = airlines[_airline].votes;
   }
 
+  function registerFlight
+    (
+     string _flight,
+     bool _isRegistered,
+     uint8 _statusCode,
+     uint256 _updatedTimestamp,
+     address _airline
+     ) external
+    requireIsOperational
+    requireIsCallerAuthorized
+  {
+    bytes32 key = getFlightKey(_airline, _flight, _updatedTimestamp);
+    require(!flights[key].isRegistered, "The flight has been registered already");
+    flights[key] = Flight({
+          flight: _flight,
+	  isRegistered: _isRegistered,
+	  statusCode: _statusCode,
+	  updatedTimestamp: _updatedTimestamp,        
+	  airline: _airline
+	});
+  }
+
 
   /**
    * @dev Buy insurance for a flight
    *
-   */   
+   */
   function buy
-    (                             
-                            )
+    (bytes32 flightKey,
+     address insuree)
     external
+    requireIsOperational
+    requireIsCallerAuthorized
     payable
   {
-
+    insurance[insuree][flightKey] = msg.value;
   }
 
   /**
