@@ -23,7 +23,7 @@ contract FlightSuretyData {
     address[] votes;
     uint256 fund;
   }
-  mapping(address => Airline) private airlines;
+  mapping(address => Airline) public airlines;
   uint256 public numberOfRegisteredAirlines = 0;
 
   
@@ -75,11 +75,6 @@ contract FlightSuretyData {
   modifier requireIsCallerAuthorized()
   {
     require(authorizedContracts[msg.sender] == 1, "Caller is not allowed to access this data contract");
-    _;
-  }
-
-  modifier requireAirlineFunded(address _address){
-    require(airlines[_address].statusCode == AIRLINE_FUNDED, "Airline must be funded");
     _;
   }
 

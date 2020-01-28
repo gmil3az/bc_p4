@@ -28,6 +28,7 @@ contract FlightSuretyApp {
     FlightSuretyData private dataContract; // reference to the associated data contract
 
     struct Flight {
+        string flight;
         bool isRegistered;
         uint8 statusCode;
         uint256 updatedTimestamp;        
@@ -76,6 +77,12 @@ contract FlightSuretyApp {
       (statusCode, votes) = dataContract.fetchAirline(msg.sender);
       require(statusCode == AIRLINE_REGISTERED ||
 	      statusCode == AIRLINE_FUNDED, "Airline must be registered");
+      _;
+    }
+
+    modifier requireAirlineFunded(address _address){
+      var (statusCode,,) = dataContract.airlines(_address);
+      require(statusCode == AIRLINE_FUNDED, "Airline must be funded");
       _;
     }
 
@@ -154,14 +161,21 @@ contract FlightSuretyApp {
    /**
     * @dev Register a future flight for insuring.
     *
-    */  
+    */
     function registerFlight
-                                (
-                                )
-                                external
-                                pure
+      (
+       string flight,
+       uint256 timestamp
+       )
+      external
+      requireAirlineFunded(msg.sender)
     {
-
+      require(!flights[key].isRegistered, "The flight has been registered already");
+      bytes32 key = getFlightKey(msg.sender, flight, timestamp);
+      flights[key].flight = flight;
+      flights[key].isRegistered = true;
+      flights[key].updatedTimestamp = timestamp;
+      flights[key].airline = msg.sender;
     }
     
    /**
@@ -180,7 +194,6 @@ contract FlightSuretyApp {
     {
     }
 
-
     // Generate a request for oracles to fetch flight information
     function fetchFlightStatus
                         (
@@ -193,7 +206,7 @@ contract FlightSuretyApp {
         uint8 index = getRandomIndex(msg.sender);
 
         // Generate a unique key for storing the request
-        bytes32 key = getFlightKey(index, airline, flight, timestamp);
+        bytes32 key = getFlightKeyForOracle(index, airline, flight, timestamp);
         oracleResponses[key] = ResponseInfo({
                                                 requester: msg.sender,
                                                 isOpen: true
@@ -202,7 +215,7 @@ contract FlightSuretyApp {
         emit OracleRequest(index, airline, flight, timestamp);
     }
 
-    function getFlightKey
+    function getFlightKeyForOracle
       (
        uint8 index,
        address airline,
@@ -395,6 +408,7 @@ contract FlightSuretyData {
   function registerAirline(address, uint8, address[]) external;
   function fetchAirline(address) external view returns(uint8, address[]);
   function numberOfRegisteredAirlines() external view returns(uint256);
+  function airlines(address) public returns (uint8, address[], uint256);
   function buy() external payable;
   function creditInsurees() external pure;
   function pay() external pure;
