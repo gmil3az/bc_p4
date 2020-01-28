@@ -40,13 +40,6 @@ contract FlightSuretyApp {
     uint8 private constant AIRLINE_PENDING = 1;
     uint8 private constant AIRLINE_REGISTERED = 2;
     uint8 private constant AIRLINE_FUNDED = 3;
-    struct Airline {
-      uint8 statusCode;
-      address[] votes;
-    }
-
-    mapping(address => Airline) private airlines;
-    uint256 public numberOfRegisteredAirlines = 0;
  
     /********************************************************************************************/
     /*                                       FUNCTION MODIFIERS                                 */
@@ -78,8 +71,11 @@ contract FlightSuretyApp {
 
     modifier requireRegisteredAirline()
     {
-      require(airlines[msg.sender].statusCode == AIRLINE_REGISTERED ||
-	      airlines[msg.sender].statusCode == AIRLINE_FUNDED, "Airline must be registered");
+      uint8 statusCode;
+      address[] memory votes;
+      (statusCode, votes) = dataContract.fetchAirline(msg.sender);
+      require(statusCode == AIRLINE_REGISTERED ||
+	      statusCode == AIRLINE_FUNDED, "Airline must be registered");
       _;
     }
 
@@ -128,33 +124,32 @@ contract FlightSuretyApp {
        )
       external
       requireRegisteredAirline
-      returns(bool success, uint256 votes)
+      returns(bool, uint256)
     {
-      require(airlines[_airline].statusCode == AIRLINE_UNKNOWN ||
-	      airlines[_airline].statusCode == AIRLINE_PENDING, "Airline has been registered already");
+      uint256 statusCode;
+      address[] memory votes;
+      (statusCode, votes) = dataContract.fetchAirline(_airline);
+      uint256 numberOfRegisteredAirlines = dataContract.numberOfRegisteredAirlines();
+      require(statusCode == AIRLINE_UNKNOWN ||
+	      statusCode == AIRLINE_PENDING, "Airline has been registered already");
       if(numberOfRegisteredAirlines > 4){
-	airlines[_airline].votes.push(msg.sender);
-	uint256 numberOfVotes = airlines[_airline].votes.length;
+	address[] memory newVotes = new address[](votes.length + 1);
+	for (uint i = 0; i < votes.length; i++){
+	  newVotes[i] = votes[i];
+	  require(msg.sender != votes[i], 'The sender has already voted for the airline');
+	}
+	newVotes[votes.length] = msg.sender;
+	uint256 numberOfVotes = votes.length;
 	if(numberOfVotes > numberOfRegisteredAirlines.div(2)){
-	  _registerAirline(_airline);
+	  dataContract.registerAirline(_airline, AIRLINE_REGISTERED, newVotes);
 	}else{
-	  airlines[_airline].statusCode = AIRLINE_PENDING;
+	  dataContract.registerAirline(_airline, AIRLINE_PENDING, newVotes);
 	}
       }else{
-	_registerAirline(_airline);
+        dataContract.registerAirline(_airline, AIRLINE_REGISTERED, votes);
       }
       return (true, numberOfVotes);
     }
-
-    function _registerAirline
-      (
-       address _airline
-       ) internal {
-      airlines[_airline].statusCode = AIRLINE_REGISTERED;
-      numberOfRegisteredAirlines = numberOfRegisteredAirlines.add(1);
-    }
-      
-
 
    /**
     * @dev Register a future flight for insuring.
@@ -397,7 +392,9 @@ contract FlightSuretyApp {
 
 contract FlightSuretyData {
   
-  function registerAirline() external pure;
+  function registerAirline(address, uint8, address[]) external;
+  function fetchAirline(address) external view returns(uint8, address[]);
+  function numberOfRegisteredAirlines() external view returns(uint256);
   function buy() external payable;
   function creditInsurees() external pure;
   function pay() external pure;

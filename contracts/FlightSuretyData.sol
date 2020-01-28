@@ -11,7 +11,16 @@ contract FlightSuretyData {
 
   address private contractOwner;                                      // Account used to deploy contract
   bool private operational = true;                                    // Blocks all state changes throughout the contract if false
-  mapping(address => uint256) private authorizedContracts; // Store authorized app address allowed to access this data contract   
+  mapping(address => uint256) private authorizedContracts; // Store authorized app address allowed to access this data contract
+
+  struct Airline {
+    uint8 statusCode;
+    address[] votes;
+  }
+  mapping(address => Airline) private airlines;
+  uint256 public numberOfRegisteredAirlines = 0;
+
+  
   /********************************************************************************************/
   /*                                       EVENT DEFINITIONS                                  */
   /********************************************************************************************/
@@ -126,11 +135,32 @@ contract FlightSuretyData {
    *
    */   
   function registerAirline
-    (   
+    (
+     address _airline,
+     uint8 _statusCode,
+     address[] _votes
                             )
     external
-    pure
+    requireIsOperational
+    requireIsCallerAuthorized
   {
+    airlines[_airline].statusCode = _statusCode;
+    airlines[_airline].votes = _votes;
+    if(_statusCode == 1){
+      numberOfRegisteredAirlines = numberOfRegisteredAirlines.add(1);
+    }
+  }
+
+  function fetchAirline
+    (
+     address _airline
+     ) external
+    requireIsOperational
+    requireIsCallerAuthorized
+    view
+    returns(uint8 statusCode, address[] votes){
+    statusCode = airlines[_airline].statusCode;
+    votes = airlines[_airline].votes;
   }
 
 
