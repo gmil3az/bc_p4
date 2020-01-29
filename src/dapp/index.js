@@ -36,12 +36,21 @@ function now(){
 		flight: "BB2222",
 		timestamp: now()
 	    }];
+
+	    let select = document.getElementById("flights-to-buy"); 
+	    for(let i = 0; i < flights.length; i++) {
+	    	let flight = flights[i];
+	    	let el = document.createElement("option");
+	    	el.textContent = `airline:${flight.airline}, flight:${flight.flight}, timestamp:${flight.timestamp}`;
+	    	el.value = `${flight.airline}:${flight.flight}:${flight.timestamp}`;
+                select.appendChild(el);
+	    }
 	    
 	    contract.registerAirlines((error, airlines) => {
 		flights.forEach((flight => {
 		    contract.registerFlight(flight.airline,flight.flight,flight.timestamp, (error, result) => {
-			if(error != null)console.log(error);
-			console.log(result);
+			if(error != null) console.log(`Failed to register Flight: ${flight.flight} with error:${error}`);
+			console.log(`Flight: ${flight.flight} has been registered successfully with result: ${result}`);
 		    });
 		}));
 		
