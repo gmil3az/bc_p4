@@ -16,7 +16,7 @@ export default class Contract {
 
     initialize(callback) {
         this.web3.eth.getAccounts((error, accts) => {
-           
+            
             this.owner = accts[0];
 
             let counter = 1;
@@ -34,8 +34,8 @@ export default class Contract {
     }
 
     isOperational(callback) {
-       let self = this;
-       self.flightSuretyApp.methods
+	let self = this;
+	self.flightSuretyApp.methods
             .isOperational()
             .call({ from: self.owner}, callback);
     }
@@ -46,11 +46,41 @@ export default class Contract {
             airline: self.airlines[0],
             flight: flight,
             timestamp: Math.floor(Date.now() / 1000)
-        } 
+        }; 
         self.flightSuretyApp.methods
             .fetchFlightStatus(payload.airline, payload.flight, payload.timestamp)
             .send({ from: self.owner}, (error, result) => {
                 callback(error, payload);
             });
+    }
+
+    registerAirlines(callback){
+	let self = this;
+	this.airlines.forEach( async (airline)=>{
+	    try{
+		await self.flightSuretyApp.methods
+		    .registerAirline(airline)
+		    .send({ from: self.owner});
+	    }catch(err){
+		callback(err);
+	    }
+	});
+	callback(null, self.airlines);
+    }
+
+    async registerFlight(airline, flight, timestamp, callback){
+	let self = this;
+	let payload = {
+            airline: airline,
+            flight: flight,
+            timestamp: timestamp
+        };
+	try{
+	    await self.flightSuretyApp.methods
+		.registerFlight(payload.flight, payload.timestamp).send({from: airline});
+	    callback(null, payload);
+	}catch(err){
+	    callback(err);
+	}
     }
 }
