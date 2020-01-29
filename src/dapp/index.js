@@ -47,14 +47,23 @@ function now(){
 	    }
 	    
 	    contract.registerAirlines((error, airlines) => {
-		flights.forEach((flight => {
-		    contract.registerFlight(flight.airline,flight.flight,flight.timestamp, (error, result) => {
-			if(error != null) console.log(`Failed to register Flight: ${flight.flight} with error:${error}`);
-			console.log(`Flight: ${flight.flight} has been registered successfully with result: ${result}`);
-		    });
-		}));
+		if(error != null){
+		    console.log(`Failed to register Airlines: ${airlines} with error: ${error}`);
+		}else{
+		    console.log(`Airlines: ${airlines} have been registered successfully`);
+		}
 		
 	    });
+
+	    flights.forEach((flight => {
+		contract.registerFlight(flight.airline,flight.flight,flight.timestamp, (error, result) => {
+		    if(error != null) {
+			console.log(`Failed to register Flight: ${flight.flight} with error:${error}`);
+		    }else{
+			console.log(`Flight: ${flight.flight} has been registered successfully with result: ${result}`);
+		    }
+		});
+	    }));
 
 	    // User-submitted transaction
 	    DOM.elid('submit-oracle').addEventListener('click', () => {
