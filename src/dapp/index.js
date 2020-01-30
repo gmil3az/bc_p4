@@ -37,13 +37,22 @@ function now(){
 		timestamp: now()
 	    }];
 
-	    let select = document.getElementById("flights-to-buy"); 
+	    let flightsToUpdateSelect = document.getElementById("flights-to-update");
 	    for(let i = 0; i < flights.length; i++) {
 	    	let flight = flights[i];
 	    	let el = document.createElement("option");
 	    	el.textContent = `airline:${flight.airline}, flight:${flight.flight}, timestamp:${flight.timestamp}`;
 	    	el.value = `${flight.airline}:${flight.flight}:${flight.timestamp}`;
-                select.appendChild(el);
+                flightsToUpdateSelect.appendChild(el);
+	    }
+	    
+	    let flightsToBuySelect = document.getElementById("flights-to-buy");
+	    for(let i = 0; i < flights.length; i++) {
+	    	let flight = flights[i];
+	    	let el = document.createElement("option");
+	    	el.textContent = `airline:${flight.airline}, flight:${flight.flight}, timestamp:${flight.timestamp}`;
+	    	el.value = `${flight.airline}:${flight.flight}:${flight.timestamp}`;
+                flightsToBuySelect.appendChild(el);
 	    }
 	    
 	    contract.registerAirlines((error, airline) => {
