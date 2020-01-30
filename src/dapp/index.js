@@ -60,16 +60,17 @@ function now(){
 		    }
 		});
 	    });
-
-	    flights.forEach((flight => {
-		contract.registerFlight(flight.airline,flight.flight,flight.timestamp, (error, result) => {
-		    if(error != null) {
-			console.log(`Failed to register Flight: ${flight.flight} with error:${error}`);
-		    }else{
-			console.log(`Flight: ${flight.flight} has been registered successfully with result: ${result}`);
-		    }
-		});
-	    }));
+	    setTimeout(()=> {
+		flights.forEach((flight => {
+		    contract.registerFlight(flight.airline,flight.flight,flight.timestamp, (error, result) => {
+			if(error != null) {
+			    console.log(`Failed to register Flight: ${flight.flight} with error:${error}`);
+			}else{
+			    console.log(`Flight: ${flight.flight} has been registered successfully with result: ${result}`);
+			}
+		    });
+		}));
+	    }, 1000);
 
 	    // User-submitted transaction
 	    DOM.elid('submit-oracle').addEventListener('click', () => {
