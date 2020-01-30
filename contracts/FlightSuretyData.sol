@@ -19,11 +19,12 @@ contract FlightSuretyData {
   uint8 private constant AIRLINE_REGISTERED = 2;
   uint8 private constant AIRLINE_FUNDED = 3;
   struct Airline {
+    bool isRegistered;
     uint8 statusCode;
     address[] votes;
     uint256 fund;
   }
-  mapping(address => Airline) public airlines;
+  mapping(address => Airline) private airlines;
   uint256 public numberOfRegisteredAirlines = 0;
 
   // Flights
@@ -34,7 +35,7 @@ contract FlightSuretyData {
     uint256 updatedTimestamp;        
     address airline;
   }
-  mapping(bytes32 => Flight) public flights;
+  mapping(bytes32 => Flight) private flights;
 
   // Insurance
   mapping(address => mapping(bytes32 => uint256)) private insurance;
@@ -58,7 +59,7 @@ contract FlightSuretyData {
     public 
     {
       contractOwner = msg.sender;
-      _registerAirline(contractOwner, 0, new address[](0));
+      _registerAirline(contractOwner, 2, new address[](0));
     }
 
   /********************************************************************************************/
@@ -157,6 +158,34 @@ contract FlightSuretyData {
   /*                                     SMART CONTRACT FUNCTIONS                             */
   /********************************************************************************************/
 
+  function getAirline(address _address) external view returns
+    (
+     bool isRegistered,
+     uint8 statusCode,
+     address[] votes,
+     uint256 fund
+     ){
+    isRegistered = airlines[_address].isRegistered;
+    statusCode = airlines[_address].statusCode;
+    votes = airlines[_address].votes;
+    fund = airlines[_address].fund;
+  }
+
+  function getFlight(bytes32 key) external view returns
+    (
+     string flight,
+     bool isRegistered,
+     uint8 statusCode,
+     uint256 updatedTimestamp,
+     address airline
+     ){
+    flight = flights[key].flight;
+    isRegistered= flights[key].isRegistered;
+    statusCode= flights[key].statusCode;
+    updatedTimestamp= flights[key].updatedTimestamp;
+    airline= flights[key].airline;
+  }
+  
   /**
    * @dev Add an airline to the registration queue
    *      Can only be called from FlightSuretyApp contract
@@ -183,6 +212,7 @@ contract FlightSuretyData {
      )
     internal
   {
+    airlines[_airline].isRegistered = true;
     airlines[_airline].statusCode = _statusCode;
     airlines[_airline].votes = _votes;
     if(_statusCode == AIRLINE_REGISTERED){
@@ -197,9 +227,10 @@ contract FlightSuretyData {
     requireIsOperational
     requireIsCallerAuthorized
     view
-    returns(uint8 statusCode, address[] votes){
+    returns(uint8 statusCode, address[] votes, bool isRegistered){
     statusCode = airlines[_airline].statusCode;
     votes = airlines[_airline].votes;
+    isRegistered = airlines[_airline].isRegistered;
   }
 
   function fetchInsuredAmount
@@ -242,18 +273,17 @@ contract FlightSuretyData {
     require(!flights[key].isRegistered, "The flight has been registered already");
     flights[key] = Flight({
           flight: _flight,
-	  isRegistered: _isRegistered,
-	  statusCode: _statusCode,
-	  updatedTimestamp: _updatedTimestamp,        
-	  airline: _airline
-	});
+    	  isRegistered: _isRegistered,
+    	  statusCode: _statusCode,
+    	  updatedTimestamp: _updatedTimestamp,
+    	  airline: _airline
+    	});
   }
 
 
   /**
    * @dev Buy insurance for a flight
    *
-   */
   function buy
     (bytes32 flightKey,
      address insuree)

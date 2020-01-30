@@ -63,17 +63,18 @@ contract FlightSuretyApp {
 
     modifier requireRegisteredAirline()
     {
+      bool isRegistered;
       uint8 statusCode;
       address[] memory votes;
-      (statusCode, votes) = dataContract.fetchAirline(msg.sender);
+      (statusCode, votes, isRegistered) = dataContract.fetchAirline(msg.sender);
       require(statusCode == AIRLINE_REGISTERED ||
 	      statusCode == AIRLINE_FUNDED, "Airline must be registered");
       _;
     }
 
     modifier requireAirlineFunded(address _address){
-      var (statusCode,,) = dataContract.airlines(_address);
-      require(statusCode == AIRLINE_FUNDED, "Airline must be funded");
+      var (,statusCode,,) = dataContract.getAirline(_address);
+      /* require(statusCode == AIRLINE_FUNDED, "Airline must be funded"); */
       _;
     }
 
@@ -124,12 +125,13 @@ contract FlightSuretyApp {
       requireRegisteredAirline
       returns(bool, uint256)
     {
+      bool isRegistered;
       uint256 statusCode;
       address[] memory votes;
-      (statusCode, votes) = dataContract.fetchAirline(_airline);
+      (statusCode, votes, isRegistered) = dataContract.fetchAirline(_airline);
       uint256 numberOfRegisteredAirlines = dataContract.numberOfRegisteredAirlines();
       require(statusCode == AIRLINE_UNKNOWN ||
-	      statusCode == AIRLINE_PENDING, "Airline has been registered already");
+	      statusCode == AIRLINE_PENDING, "Airline must be in status of UNKNOWN or PENDING");
       if(numberOfRegisteredAirlines > 4){
 	address[] memory newVotes = new address[](votes.length + 1);
 	for (uint i = 0; i < votes.length; i++){
@@ -163,7 +165,7 @@ contract FlightSuretyApp {
       requireAirlineFunded(msg.sender)
     {
       bytes32 key = getFlightKey(msg.sender, flight, timestamp);
-      var (,isRegistered,,,) = dataContract.flights(key);
+      var (,isRegistered,,,) = dataContract.getFlight(key);
       require(!isRegistered, "The flight has been registered already");
       dataContract.registerFlight(flight, true, 0, timestamp, msg.sender);
     }
@@ -176,7 +178,7 @@ contract FlightSuretyApp {
        ) public payable requireIsOperational {
       require((msg.value <= 1 ether) ,"The insurance amount must be less than or equal to 1 ether");
       bytes32 flightKey = getFlightKey(_airline, _flight, _timestamp);
-      var (,isRegistered,,,) = dataContract.flights(flightKey);
+      var (,isRegistered,,,) = dataContract.getFlight(flightKey);
       require(isRegistered, "The flight must be registered");
       dataContract.buy.value(msg.value)(flightKey, msg.sender);
     }
@@ -189,7 +191,7 @@ contract FlightSuretyApp {
       )
       external payable {
       bytes32 flightKey = getFlightKey(airline, flight, timestamp);
-      var (,isRegistered,statusCode,,) = dataContract.flights(flightKey);
+      var (,isRegistered,statusCode,,) = dataContract.getFlight(flightKey);
       require(isRegistered, "The flight must be registered");
       require(statusCode > STATUS_CODE_ON_TIME, "The flight is not late");
       uint256 insuredAmount = dataContract.fetchInsuredAmount(msg.sender, flightKey);
@@ -428,10 +430,10 @@ contract FlightSuretyApp {
 contract FlightSuretyData {
   
   function registerAirline(address, uint8, address[]) external;
-  function fetchAirline(address) external view returns(uint8, address[]);
+  function fetchAirline(address) external view returns(uint8, address[], bool);
   function numberOfRegisteredAirlines() external view returns(uint256);
-  function airlines(address) public returns (uint8, address[], uint256);
-  function flights(bytes32) public returns (string, bool, uint8, uint256, address);
+  function getAirline(address) public returns (bool, uint8, address[], uint256);
+  function getFlight(bytes32) public returns (string, bool, uint8, uint256, address);
   function registerFlight(string, bool, uint8, uint256, address) external;
   function buy(bytes32, address) external payable;
   function creditInsurees(bytes32, uint8) external;

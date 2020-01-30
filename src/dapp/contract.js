@@ -1,13 +1,15 @@
 import FlightSuretyApp from '../../build/contracts/FlightSuretyApp.json';
+import FlightSuretyData from '../../build/contracts/FlightSuretyData.json';
 import Config from './config.json';
 import Web3 from 'web3';
 
 export default class Contract {
     constructor(network, callback) {
 
-        let config = Config[network];
-        this.web3 = new Web3(new Web3.providers.HttpProvider(config.url));
-        this.flightSuretyApp = new this.web3.eth.Contract(FlightSuretyApp.abi, config.appAddress);
+        this.config = Config[network];
+        this.web3 = new Web3(new Web3.providers.HttpProvider(this.config.url));
+        this.flightSuretyApp = new this.web3.eth.Contract(FlightSuretyApp.abi, this.config.appAddress);
+	this.flightSuretyData = new this.web3.eth.Contract(FlightSuretyData.abi, this.config.dataAddress);
         this.initialize(callback);
         this.owner = null;
         this.airlines = [];
@@ -29,7 +31,12 @@ export default class Contract {
                 this.passengers.push(accts[counter++]);
             }
 
-            callback();
+	    this.flightSuretyData.methods
+		.authorizeContract(this.config.appAddress).send({from: this.owner}).then(() => {
+		    console.log('App contract has been authorized to access data contract')
+		    callback();
+		}, reason => console.log(`Failed to authorize App contract to access Data contract`));
+            
         });
     }
 
@@ -56,16 +63,15 @@ export default class Contract {
 
     registerAirlines(callback){
 	let self = this;
-	this.airlines.forEach( async (airline)=>{
-	    try{
-		await self.flightSuretyApp.methods
-		    .registerAirline(airline)
-		    .send({ from: self.owner});
-	    }catch(err){
-		callback(err);
-	    }
+	this.airlines.forEach((airline)=>{
+	    self.flightSuretyApp.methods
+		.registerAirline(airline)
+		.send({ from: self.owner})
+		.then(
+		    ()=>callback(null, airline),
+		    (reason)=>callback(reason, airline)
+		);
 	});
-	callback(null, self.airlines);
     }
 
     async registerFlight(airline, flight, timestamp, callback){
@@ -77,7 +83,7 @@ export default class Contract {
         };
 	try{
 	    await self.flightSuretyApp.methods
-		.registerFlight(payload.flight, payload.timestamp).send({from: airline});
+		.registerFlight(payload.flight, payload.timestamp).send({from: airline, gasPrice: '1', gas: '1000000'});
 	    callback(null, payload);
 	}catch(err){
 	    callback(err);

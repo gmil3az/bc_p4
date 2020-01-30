@@ -12,7 +12,7 @@ function now(){
 	let result = null;
 
 	let contract = new Contract('localhost', () => {
-
+	    
             // Read transaction
             contract.isOperational((error, result) => {
 		console.log(error,result);
@@ -46,11 +46,11 @@ function now(){
                 select.appendChild(el);
 	    }
 	    
-	    contract.registerAirlines((error, airlines) => {
+	    contract.registerAirlines((error, airline) => {
 		if(error != null){
-		    console.log(`Failed to register Airlines: ${airlines} with error: ${error}`);
+		    console.log(`Failed to register Airlines: ${airline} with error: ${error}`);
 		}else{
-		    console.log(`Airlines: ${airlines} have been registered successfully`);
+		    console.log(`Airlines: ${airline} have been registered successfully`);
 		}
 		
 	    });
