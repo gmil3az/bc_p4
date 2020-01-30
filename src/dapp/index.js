@@ -48,11 +48,17 @@ function now(){
 	    
 	    contract.registerAirlines((error, airline) => {
 		if(error != null){
-		    console.log(`Failed to register Airlines: ${airline} with error: ${error}`);
+		    console.log(`Failed to register Airline: ${airline} with error: ${error}`);
 		}else{
-		    console.log(`Airlines: ${airline} have been registered successfully`);
+		    console.log(`Airline: ${airline} have been registered successfully`);
 		}
-		
+		contract.airlineFunding(airline, (error, airline) => {
+		    if(error != null){
+			console.log(`Failed to fund Airline: ${airline} with error: ${error}`);
+		    }else{
+			console.log(`Airline: ${airline} have been funded successfully`);
+		    }
+		});
 	    });
 
 	    flights.forEach((flight => {

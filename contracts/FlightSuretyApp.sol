@@ -74,7 +74,7 @@ contract FlightSuretyApp {
 
     modifier requireAirlineFunded(address _address){
       var (,statusCode,,) = dataContract.getAirline(_address);
-      /* require(statusCode == AIRLINE_FUNDED, "Airline must be funded"); */
+      require(statusCode == AIRLINE_FUNDED, "Airline must be funded");
       _;
     }
 

@@ -74,6 +74,17 @@ export default class Contract {
 	});
     }
 
+    airlineFunding(airline, callback){
+	this.web3.eth.sendTransaction({
+	    from: airline,
+	    to: this.config.dataAddress,
+	    value: this.web3.utils.toWei('10', 'ether')
+	}).then(
+	    ()=>callback(null, airline),
+	    (reason)=>callback(reason, airline)
+	);
+    }
+
     async registerFlight(airline, flight, timestamp, callback){
 	let self = this;
 	let payload = {
