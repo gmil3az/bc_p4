@@ -83,10 +83,26 @@ function now(){
 
 	    // User-submitted transaction
 	    DOM.elid('submit-oracle').addEventListener('click', () => {
-		let flight = DOM.elid('flight-number').value;
+		let flightCoordinate = DOM.elid('flights-to-update').value.split(":");
+		let airline = flightCoordinate[0];
+		let flight = flightCoordinate[1];
+		let timestamp = flightCoordinate[2];
+		console.log(`Fetching flight status for the flight [${airline}:${flight}:${timestamp}]`);
 		// Write transaction
-		contract.fetchFlightStatus(flight, (error, result) => {
-		    display('Oracles', 'Trigger oracles', [ { label: 'Fetch Flight Status', error: error, value: result.flight + ' ' + result.timestamp} ]);
+		contract.fetchFlightStatus(airline, flight, timestamp, (error, result) => {
+		    display('Oracles', 'Trigger oracles', [ { label: 'Fetch Flight Status', error: error, value: result.airline + ' ' + result.flight + ' ' + result.timestamp} ]);
+		});
+	    });
+
+	    DOM.elid('buy-insurance').addEventListener('click', () => {
+		let flightCoordinate = DOM.elid('flights-to-buy').value.split(":");
+		let airline = flightCoordinate[0];
+		let flight = flightCoordinate[1];
+		let timestamp = flightCoordinate[2];
+		console.log(`Buying insurance for the flight [${airline}:${flight}:${timestamp}]`);
+		// Write transaction
+		contract.buyFromApp(airline, flight, timestamp, (error, result) => {
+		    display('Insurance', 'Buy insurance', [ { label: 'Buy insurance', error: error, value: result.airline + ' ' + result.flight + ' ' + result.timestamp} ]);
 		});
 	    });
 	    

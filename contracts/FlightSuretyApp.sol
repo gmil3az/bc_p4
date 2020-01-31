@@ -189,12 +189,15 @@ contract FlightSuretyApp {
        string flight,
        uint256 timestamp       
       )
-      external payable {
+      external
+      requireIsOperational
+      payable {
       bytes32 flightKey = getFlightKey(airline, flight, timestamp);
       var (,isRegistered,statusCode,,) = dataContract.getFlight(flightKey);
       require(isRegistered, "The flight must be registered");
       require(statusCode > STATUS_CODE_ON_TIME, "The flight is not late");
       uint256 insuredAmount = dataContract.fetchInsuredAmount(msg.sender, flightKey);
+      require(insuredAmount > 0, "Insured amount must be greater than 0");
       dataContract.setInsuredAmount(msg.sender, flightKey, 0);
       uint256 payoutAmount = insuredAmount.mul(15).div(10);
       uint256 airlineFundDeduction = payoutAmount.sub(insuredAmount);
@@ -226,6 +229,7 @@ contract FlightSuretyApp {
                             uint256 timestamp                            
                         )
                         external
+      requireIsOperational
     {
         uint8 index = getRandomIndex(msg.sender);
 

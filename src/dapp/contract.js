@@ -47,16 +47,45 @@ export default class Contract {
             .call({ from: self.owner}, callback);
     }
 
-    fetchFlightStatus(flight, callback) {
+    fetchFlightStatus(airline, flight, timestamp, callback) {
         let self = this;
         let payload = {
-            airline: self.airlines[0],
+            airline: airline,
             flight: flight,
-            timestamp: Math.floor(Date.now() / 1000)
+            timestamp: timestamp
         }; 
         self.flightSuretyApp.methods
             .fetchFlightStatus(payload.airline, payload.flight, payload.timestamp)
-            .send({ from: self.owner}, (error, result) => {
+            .send({ from: self.passengers[0]}, (error, result) => {
+                callback(error, payload);
+            });
+    }
+
+    buyFromApp(airline, flight, timestamp, callback) {
+        let self = this;
+        let payload = {
+            airline: airline,
+            flight: flight,
+            timestamp: timestamp
+        };
+	let amount = this.web3.utils.toWei('1', 'ether');
+        self.flightSuretyApp.methods
+            .buyFromApp(payload.airline, payload.flight, payload.timestamp)
+            .send({ from: self.passengers[0], value: amount}, (error, result) => {
+                callback(error, payload);
+            });
+    }
+
+    withdraw(airline, flight, timestamp, callback) {
+        let self = this;
+        let payload = {
+            airline: airline,
+            flight: flight,
+            timestamp: timestamp
+        }; 
+        self.flightSuretyApp.methods
+            .withdraw(payload.airline, payload.flight, payload.timestamp)
+            .send({ from: self.passengers[0]}, (error, result) => {
                 callback(error, payload);
             });
     }
