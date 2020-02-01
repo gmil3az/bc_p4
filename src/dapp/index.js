@@ -111,7 +111,7 @@ function now(){
 		// Write transaction
 		contract.withdraw(airline, flight, timestamp, (error, result) => {
 		    contract.currentBalance(
-			(error, currentBalance) => {
+			(e, currentBalance) => {
 			    display('Insurance', 'Claim insurance', [ { label: 'Claim insurance', error: error, value: result.airline + ' ' + result.flight + ' ' + result.timestamp + ' => current balance is ' + currentBalance} ]);
 			});
 		});
