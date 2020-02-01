@@ -169,9 +169,29 @@ contract('Flight Surety Tests', async (accounts) => {
 
     });
 
-    it('(flight) Registration of fifth and subsequent airlines requires multi-party consensus of 50% of registered airlines', async () => {
+    it('(flight) register new flight successfully', async () => {
+	let flight = 'ND1309'; // Course number
+	let timestamp = Math.floor(Date.now() / 1000);
+	let secondAirline = accounts[1];	
+	await config.flightSuretyApp.registerFlight(flight, timestamp, {from: secondAirline});
+    });
 
-    });    
+    it(`(flight) register new flight fail due to airline not funded`, async function () {
+	let flight = 'ND1310'; // Course number
+	let timestamp = Math.floor(Date.now() / 1000);
+	let seventhAirline = accounts[6];
+	
+	let airlineNotFunded = false;
+	try 
+	{
+	    await config.flightSuretyApp.registerFlight(flight, timestamp, {from: seventhAirline});
+	}
+	catch(e) {
+            airlineNotFunded = true;
+	}
+	assert.equal(airlineNotFunded, true, "Airline registered but not funded should not be able to register a flight");
+        
+    });
 
     async function checkAirlineStatus(airline, expectedStatusCode, msg){
 	let response = await config.flightSuretyData.fetchAirline.call(airline, {from: config.flightSuretyApp.address});
