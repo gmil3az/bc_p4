@@ -122,7 +122,7 @@ contract FlightSuretyApp {
        address _airline
        )
       external
-      requireRegisteredAirline
+      requireAirlineFunded(msg.sender)
       returns(bool, uint256)
     {
       bool isRegistered;
@@ -132,15 +132,15 @@ contract FlightSuretyApp {
       uint256 numberOfRegisteredAirlines = dataContract.numberOfRegisteredAirlines();
       require(statusCode == AIRLINE_UNKNOWN ||
 	      statusCode == AIRLINE_PENDING, "Airline must be in status of UNKNOWN or PENDING");
-      if(numberOfRegisteredAirlines > 4){
+      if(numberOfRegisteredAirlines >= 4){
 	address[] memory newVotes = new address[](votes.length + 1);
 	for (uint i = 0; i < votes.length; i++){
 	  newVotes[i] = votes[i];
 	  require(msg.sender != votes[i], 'The sender has already voted for the airline');
 	}
 	newVotes[votes.length] = msg.sender;
-	uint256 numberOfVotes = votes.length;
-	if(numberOfVotes > numberOfRegisteredAirlines.div(2)){
+	uint256 numberOfVotes = newVotes.length;
+	if(numberOfVotes >= numberOfRegisteredAirlines.div(2)){
 	  dataContract.registerAirline(_airline, AIRLINE_REGISTERED, newVotes);
 	}else{
 	  dataContract.registerAirline(_airline, AIRLINE_PENDING, newVotes);

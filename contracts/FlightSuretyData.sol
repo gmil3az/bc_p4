@@ -59,7 +59,7 @@ contract FlightSuretyData {
     public 
     {
       contractOwner = msg.sender;
-      _registerAirline(contractOwner, 2, new address[](0));
+      _registerAirline(contractOwner, 3, new address[](0));
     }
 
   /********************************************************************************************/
@@ -215,7 +215,7 @@ contract FlightSuretyData {
     airlines[_airline].isRegistered = true;
     airlines[_airline].statusCode = _statusCode;
     airlines[_airline].votes = _votes;
-    if(_statusCode == AIRLINE_REGISTERED){
+    if(_statusCode == AIRLINE_FUNDED){
       numberOfRegisteredAirlines = numberOfRegisteredAirlines.add(1);
     }
   }
@@ -354,6 +354,7 @@ contract FlightSuretyData {
     require(msg.value >= 10 ether, "Fund must be greater or equals to 10 ether");
     airlines[msg.sender].fund = msg.value;
     airlines[msg.sender].statusCode = AIRLINE_FUNDED;
+    numberOfRegisteredAirlines += 1;
   }
 
   function getFlightKey
