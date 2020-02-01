@@ -114,6 +114,17 @@ export default class Contract {
 	);
     }
 
+    currentBalance(callback){
+	let address = this.passengers[0];
+	console.log(`address = ${address}`);
+	this.web3.eth.getBalance(address).then(
+	    (balance)=>{
+		console.log(`Current balance of passenger[0] ${address} is ${balance}`);
+		callback(null, web3.toDecimal(balance));
+	    },(reason)=>callback(reason)
+	);
+    }
+
     async registerFlight(airline, flight, timestamp, callback){
 	let self = this;
 	let payload = {
