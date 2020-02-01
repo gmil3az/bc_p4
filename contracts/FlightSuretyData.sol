@@ -292,6 +292,8 @@ contract FlightSuretyData {
     requireIsCallerAuthorized
     payable
   {
+    require(msg.value > 0, "Transfered amount must be greater than 0");
+    require(flights[flightKey].statusCode == 0, "The flight has been landed already");
     insurance[insuree][flightKey] = insurance[insuree][flightKey] + msg.value;
   }
 
@@ -308,6 +310,9 @@ contract FlightSuretyData {
     requireIsCallerAuthorized
   {
     flights[flightKey].statusCode = flightStatusCode;
+    /**
+     * There is no need to store the credit again, since we will rely on the credit in variable 'insurance' to calculate the actual return amount on the fly when calling 'withdraw' on the App contract.
+     */
   }
     
 

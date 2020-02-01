@@ -176,7 +176,7 @@ contract FlightSuretyApp {
        string _flight,
        uint256 _timestamp
        ) public payable requireIsOperational {
-      require((msg.value <= 1 ether) ,"The insurance amount must be less than or equal to 1 ether");
+      require((msg.value <= 1 ether && msg.value > 0) ,"The insurance amount must be less than or equal to 1 ether, but greater than 0");
       bytes32 flightKey = getFlightKey(_airline, _flight, _timestamp);
       var (,isRegistered,,,) = dataContract.getFlight(flightKey);
       require(isRegistered, "The flight must be registered");
@@ -353,7 +353,7 @@ contract FlightSuretyApp {
 
 
         bytes32 key = keccak256(abi.encodePacked(index, airline, flight, timestamp)); 
-        require(oracleResponses[key].isOpen, "Flight or timestamp do not match oracle request");
+        require(oracleResponses[key].isOpen, "Oracle request has been timed-out");
 
         oracleResponses[key].responses[statusCode].push(msg.sender);
 
@@ -361,11 +361,11 @@ contract FlightSuretyApp {
         // oracles respond with the *** same *** information
         emit OracleReport(airline, flight, timestamp, statusCode);
         if (oracleResponses[key].responses[statusCode].length >= MIN_RESPONSES) {
-
             emit FlightStatusInfo(airline, flight, timestamp, statusCode);
 
             // Handle flight status as appropriate
             processFlightStatus(airline, flight, timestamp, statusCode);
+	    oracleResponses[key].isOpen = false;
         }
     }
 

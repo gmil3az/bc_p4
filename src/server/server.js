@@ -34,14 +34,15 @@ const flightStatuses = [0, 10, 20 ,30 ,40 ,50];
 flightSuretyApp.events.OracleRequest({
     fromBlock: 0
   }, function (error, event) {
-      if (error) console.log(error);
-      console.log(event);
-      oracleRequest = event.returnValues;
+      if (error) console.log(`error: ${util.inspect(error)}`);
+      console.log(`event: ${util.inspect(event)}`);
+      let oracleRequest = event.returnValues;
       let targetOracles = oracles.filter(oracle => oracle.indexes.includes(oracleRequest.index));
-      console.log(`targetOracles: ${targetOracles}`);
+      console.log(`targetOracles: ${util.inspect(targetOracles)}`);
       targetOracles.forEach( async oracle => {
-	  let flightStatusCode = flightStatuses[Math.floor(Math.random()*items.length)];
-	  await flightSuretyApp.methods.submitOracleResponse(oracleRequest.index, oracleRequest.airline, oracleRequest.flight, oracleRequest.timestamp, flightStatusCode).send({from: oracle.oracleAddress });
+	  let flightStatusCode = flightStatuses[Math.floor(Math.random()*flightStatuses.length)];
+	  let response = await flightSuretyApp.methods.submitOracleResponse(oracleRequest.index, oracleRequest.airline, oracleRequest.flight, oracleRequest.timestamp, flightStatusCode).send({from: oracle.oracleAddress });
+	  console.log(`oracle response has been submitted [index:${oracleRequest.index}, airline:${oracleRequest.airline}, flight:${oracleRequest.flight}, timestamp:${oracleRequest.timestamp}, flightStatusCode:${flightStatusCode}]] => with response: ${response}`);
       });
   });
 
@@ -49,14 +50,18 @@ flightSuretyApp.events.OracleReport({
     fromBlock: 0
 }, function (error, event) {
     if (error) console.log(error);
-    console.log(event.returnValues);
+    // console.log(event.returnValues);
+    let report = event.returnValues;
+    console.log(`Report [${report.flight}] status [${report.status}]`);
 });
 
 flightSuretyApp.events.FlightStatusInfo({
     fromBlock: 0
 }, function (error, event) {
     if (error) console.log(error);
-    console.log(event.returnValues);
+    // console.log(event.returnValues);
+    let status = event.returnValues;
+    console.log(`Flight [${status.flight}] status has been updated to [${status.status}]`);
 });
 
 const app = express();

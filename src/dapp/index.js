@@ -37,23 +37,11 @@ function now(){
 		timestamp: now()
 	    }];
 
-	    let flightsToUpdateSelect = document.getElementById("flights-to-update");
-	    for(let i = 0; i < flights.length; i++) {
-	    	let flight = flights[i];
-	    	let el = document.createElement("option");
-	    	el.textContent = `airline:${flight.airline}, flight:${flight.flight}, timestamp:${flight.timestamp}`;
-	    	el.value = `${flight.airline}:${flight.flight}:${flight.timestamp}`;
-                flightsToUpdateSelect.appendChild(el);
-	    }
+	    let flightsToUpdateSelect = populateDropdown("flights-to-update", flights);
 	    
-	    let flightsToBuySelect = document.getElementById("flights-to-buy");
-	    for(let i = 0; i < flights.length; i++) {
-	    	let flight = flights[i];
-	    	let el = document.createElement("option");
-	    	el.textContent = `airline:${flight.airline}, flight:${flight.flight}, timestamp:${flight.timestamp}`;
-	    	el.value = `${flight.airline}:${flight.flight}:${flight.timestamp}`;
-                flightsToBuySelect.appendChild(el);
-	    }
+	    let flightsToBuySelect = populateDropdown("flights-to-buy", flights);
+
+	    let flightsToClaimSelect = populateDropdown("flights-to-claim", flights);
 	    
 	    contract.registerAirlines((error, airline) => {
 		if(error != null){
@@ -79,7 +67,7 @@ function now(){
 			}
 		    });
 		}));
-	    }, 1000);
+	    }, 2000);
 
 	    // User-submitted transaction
 	    DOM.elid('submit-oracle').addEventListener('click', () => {
@@ -105,27 +93,49 @@ function now(){
 		    display('Insurance', 'Buy insurance', [ { label: 'Buy insurance', error: error, value: result.airline + ' ' + result.flight + ' ' + result.timestamp} ]);
 		});
 	    });
+
+	    DOM.elid('claim-insurance').addEventListener('click', () => {
+		let flightCoordinate = DOM.elid('flights-to-claim').value.split(":");
+		let airline = flightCoordinate[0];
+		let flight = flightCoordinate[1];
+		let timestamp = flightCoordinate[2];
+		console.log(`Claim my insurance for the flight [${airline}:${flight}:${timestamp}]`);
+		// Write transaction
+		contract.withdraw(airline, flight, timestamp, (error, result) => {
+		    display('Insurance', 'Claim insurance', [ { label: 'Claim insurance', error: error, value: result.airline + ' ' + result.flight + ' ' + result.timestamp} ]);
+		});
+	    });
 	    
 	});
 	    
 
 	})();
 
+function populateDropdown(dropdownId, flights){
+    let dropdown = document.getElementById(dropdownId);
+    for(let i = 0; i < flights.length; i++) {
+	let flight = flights[i];
+	let el = document.createElement("option");
+	el.textContent = `airline:${flight.airline}, flight:${flight.flight}, timestamp:${flight.timestamp}`;
+	el.value = `${flight.airline}:${flight.flight}:${flight.timestamp}`;
+        dropdown.appendChild(el);
+    }
+}
 
-	function display(title, description, results) {
-	    let displayDiv = DOM.elid("display-wrapper");
-	    let section = DOM.section();
-	    section.appendChild(DOM.h2(title));
-	    section.appendChild(DOM.h5(description));
-	    results.map((result) => {
-		let row = section.appendChild(DOM.div({className:'row'}));
-		row.appendChild(DOM.div({className: 'col-sm-4 field'}, result.label));
-		row.appendChild(DOM.div({className: 'col-sm-8 field-value'}, result.error ? String(result.error) : String(result.value)));
-		section.appendChild(row);
-	    })
-	    displayDiv.append(section);
+function display(title, description, results) {
+    let displayDiv = DOM.elid("display-wrapper");
+    let section = DOM.section();
+    section.appendChild(DOM.h2(title));
+    section.appendChild(DOM.h5(description));
+    results.map((result) => {
+	let row = section.appendChild(DOM.div({className:'row'}));
+	row.appendChild(DOM.div({className: 'col-sm-4 field'}, result.label));
+	row.appendChild(DOM.div({className: 'col-sm-8 field-value'}, result.error ? String(result.error) : String(result.value)));
+	section.appendChild(row);
+    })
+    displayDiv.append(section);
 
-	}
+}
 
 
 
