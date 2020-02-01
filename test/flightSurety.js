@@ -169,6 +169,10 @@ contract('Flight Surety Tests', async (accounts) => {
 
     });
 
+    it('(flight) Registration of fifth and subsequent airlines requires multi-party consensus of 50% of registered airlines', async () => {
+
+    });    
+
     async function checkAirlineStatus(airline, expectedStatusCode, msg){
 	let response = await config.flightSuretyData.fetchAirline.call(airline, {from: config.flightSuretyApp.address});
 	assert.equal(response.statusCode.toNumber(), expectedStatusCode, msg);
