@@ -283,7 +283,7 @@ contract FlightSuretyData {
 
   /**
    * @dev Buy insurance for a flight
-   *
+   */
   function buy
     (bytes32 flightKey,
      address insuree)
@@ -292,7 +292,7 @@ contract FlightSuretyData {
     requireIsCallerAuthorized
     payable
   {
-    insurance[insuree][flightKey] = msg.value;
+    insurance[insuree][flightKey] = insurance[insuree][flightKey] + msg.value;
   }
 
   /**
