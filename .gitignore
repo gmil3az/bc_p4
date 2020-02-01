@@ -66,5 +66,3 @@ typings/
 ~$*.pptx
 
 .tern-port
-yarn.lock
-package-lock.json
