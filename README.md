@@ -37,7 +37,7 @@ Go to localhost:8000 to see the dapp. To simply test the dapp, you can do the fo
 
 `Flight [TG1001] status has been updated to [20]`
 
-You can do step number 3. again if the status is 0 or 10.
+You might want to do step number 3 until you see such message with the status code not equal 0 or 10.
 
 5. Click on Claim button to get the amount back. You can also see the current balance will be increase ~1.5 ether.
 
