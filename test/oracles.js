@@ -40,7 +40,7 @@ contract('Oracles', async (accounts) => {
     let timestamp = Math.floor(Date.now() / 1000);
 
     // Submit a request for oracles to get status information for a flight
-    await config.flightSuretyApp.fetchFlightStatus(accounts[7], flight, timestamp);
+    await config.flightSuretyApp.fetchFlightStatus(config.owner, flight, timestamp);
     // ACT
 
     // Since the Index assigned to each test account is opaque by design
@@ -55,7 +55,7 @@ contract('Oracles', async (accounts) => {
 
         try {
           // Submit a response...it will only be accepted if there is an Index match
-          await config.flightSuretyApp.submitOracleResponse(oracleIndexes[idx], config.firstAirline, flight, timestamp, STATUS_CODE_ON_TIME, { from: accounts[a] });
+          await config.flightSuretyApp.submitOracleResponse(oracleIndexes[idx], config.owner, flight, timestamp, STATUS_CODE_ON_TIME, { from: accounts[a] });
 
         }
         catch(e) {
