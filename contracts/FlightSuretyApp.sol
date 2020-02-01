@@ -198,7 +198,7 @@ contract FlightSuretyApp {
       require(statusCode > STATUS_CODE_ON_TIME, "The flight is not late");
       uint256 insuredAmount = dataContract.fetchInsuredAmount(msg.sender, flightKey);
       require(insuredAmount > 0, "Insured amount must be greater than 0");
-      dataContract.setInsuredAmount(msg.sender, flightKey, 0);
+      /* dataContract.setInsuredAmount(msg.sender, flightKey, 0); */
       uint256 payoutAmount = insuredAmount.mul(15).div(10);
       uint256 airlineFundDeduction = payoutAmount.sub(insuredAmount);
       dataContract.pay(msg.sender, payoutAmount, airlineFundDeduction, flightKey);
